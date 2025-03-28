@@ -87,10 +87,6 @@ func (h *HealthCheck) Start(services []*ServiceCheck, ready chan<- bool, status 
 	}
 }
 
-func (h *HealthCheck) didReloadBefore() bool {
-	return h.reloadedBefore
-}
-
 func (h *HealthCheck) handleAction(action *Action, status chan string) {
 	for _, p := range action.Prefixes {
 		switch action.State {
@@ -160,7 +156,7 @@ func (h *HealthCheck) applyConfig(config Config, prefixes PrefixCollection) erro
 		// if config did not change, we should still reload if we don't know the
 		// state of BIRD
 		if errors.Is(err, errConfigIdentical) {
-			if h.didReloadBefore() {
+			if h.reloadedBefore {
 				cLog.Warning("config did not change, not reloading")
 
 				return nil
