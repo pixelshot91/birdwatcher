@@ -212,28 +212,31 @@ func (h *HealthCheck) applyConfig(config Config, prefixes PrefixCollection) erro
 }
 
 func (h *HealthCheck) addPrefix(svc *ServiceCheck, prefix net.IPNet) {
-	h.ensurePrefixSet(svc.FunctionName)
+	h.ensurePrefixSet(svc)
 
 	h.prefixes[svc.FunctionName].Add(prefix)
 	prefixStateMetric.WithLabelValues(svc.Name(), prefix.String()).Set(1.0)
 }
 
 func (h *HealthCheck) removePrefix(svc *ServiceCheck, prefix net.IPNet) {
-	h.ensurePrefixSet(svc.FunctionName)
+	h.ensurePrefixSet(svc)
 
 	h.prefixes[svc.FunctionName].Remove(prefix)
 	prefixStateMetric.WithLabelValues(svc.Name(), prefix.String()).Set(0.0)
 }
 
-func (h *HealthCheck) ensurePrefixSet(functionName string) {
+func (h *HealthCheck) ensurePrefixSet(svc *ServiceCheck) {
 	// make sure the top level map is prepared
 	if h.prefixes == nil {
 		h.prefixes = make(PrefixCollection)
 	}
 
-	// make sure a mapping for this function name exists
-	if _, found := h.prefixes[functionName]; !found {
-		h.prefixes[functionName] = NewPrefixSet(functionName)
+	// make sure a mapping for this function name exists and reflects the current
+	// health status of the service
+	if _, found := h.prefixes[svc.FunctionName]; found {
+		h.prefixes[svc.FunctionName].healthy = svc.IsUp()
+	} else {
+		h.prefixes[svc.FunctionName] = NewPrefixSet(svc)
 	}
 }
 
