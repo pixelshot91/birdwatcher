@@ -22,7 +22,7 @@ jobs:
       run: go test -v ./...
     - name: GoReleaser
       uses: goreleaser/goreleaser-action@v6
-      if: startsWith(github.ref, 'refs/tags/')
+      # if: startsWith(github.ref, 'refs/tags/')
       with:
         version: '~> v2'
         args: release --clean
